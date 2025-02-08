@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoShorten & Scan</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Navigation -->
+        <div class="nav">
+            <button class="nav-btn active" data-tab="history">History</button>
+            <button class="nav-btn" data-tab="settings">Settings</button>
+        </div>
+
+        <!-- History Tab -->
+        <div class="tab-content active" id="history">
+            <div class="history-list">
+                <!-- History items will be added here dynamically -->
+                <div class="empty-state">No history yet</div>
+            </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div class="tab-content" id="settings">
+            <div class="settings-group">
+                <label class="setting">
+                    <span>Enable QR Code</span>
+                    <input type="checkbox" id="enableQr" checked>
+                </label>
+
+                <label class="setting">
+                    <span>Use Original URL for QR</span>
+                    <input type="checkbox" id="useOriginalUrl">
+                </label>
+
+                <label class="setting">
+                    <span>QR Code Color</span>
+                    <input type="color" id="qrColor" value="#000000">
+                </label>
+
+                <label class="setting">
+                    <span>QR Background Color</span>
+                    <input type="color" id="qrBackground" value="#ffffff">
+                </label>
+
+                <label class="setting">
+                    <span>Notification Duration (seconds)</span>
+                    <input type="number" id="notificationDuration" min="1" max="30" value="5">
+                </label>
+
+                <label class="setting">
+                    <span>Auto-copy Shortened URL</span>
+                    <input type="checkbox" id="autoCopy" checked>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- History item template -->
+    <template id="history-item-template">
+        <div class="history-item">
+            <div class="url"></div>
+            <div class="original-url"></div>
+            <div class="timestamp"></div>
+            <div class="actions">
+                <button class="copy-short">Copy Short URL</button>
+                <button class="copy-original">Copy Original</button>
+            </div>
+        </div>
+    </template>
+
+    <script src="popup.js"></script>
+</body>
+</html>
