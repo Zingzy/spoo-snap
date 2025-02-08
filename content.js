@@ -1,13 +1,17 @@
-// Debug helper
+// Debug logging utility
 const debug = {
-    log: (message) => {
-        console.log(`[Content Debug] ${message}`);
+    log: (message, data) => {
+        console.log(`[Content Debug] ${message}`, data || '');
     },
-    error: (message) => {
-        console.error(`[Content Error] ${message}`);
+    error: (message, error) => {
+        console.error(`[Content Error] ${message}`, error || '');
     }
 };
 
+/**
+    * NotificationUI Class
+    * Handles the creation and management of floating notifications
+ */
 class NotificationUI {
     constructor() {
         this.container = null;
@@ -16,6 +20,7 @@ class NotificationUI {
         debug.log('NotificationUI initialized');
     }
 
+    // Injects required CSS styles into the page
     setupStyles() {
         const style = document.createElement('style');
         style.textContent = `
@@ -105,8 +110,10 @@ class NotificationUI {
             }
         `;
         document.head.appendChild(style);
+        debug.log('Notification styles injected');
     }
 
+    // Creates the notification container
     createContainer() {
         debug.log('Creating notification container');
         const container = document.createElement('div');
@@ -121,8 +128,11 @@ class NotificationUI {
         return container;
     }
 
+    // Shows the notification with the shortened URL and QR code
     async show(shortUrl, qrUrl, duration) {
-        debug.log('Showing notification');
+        debug.log('Showing notification', { shortUrl, qrUrl, duration });
+
+        // Clear existing timeout if any
         if (this.timeout) {
             clearTimeout(this.timeout);
             this.timeout = null;
@@ -131,13 +141,13 @@ class NotificationUI {
         const container = this.container || this.createContainer();
         container.innerHTML = '';
 
-        // Title
+        // Add title
         const title = document.createElement('div');
         title.className = 'title';
         title.textContent = 'URL Shortened!';
         container.appendChild(title);
 
-        // Short URL container
+        // Add URL container
         const urlContainer = document.createElement('div');
         urlContainer.className = 'url-container';
 
@@ -148,28 +158,13 @@ class NotificationUI {
         const copyButton = document.createElement('button');
         copyButton.className = 'copy-btn';
         copyButton.textContent = 'Copy';
-        copyButton.addEventListener('click', async () => {
-            debug.log('Copy button clicked');
-            try {
-                await navigator.clipboard.writeText(shortUrl);
-                copyButton.textContent = 'Copied!';
-                copyButton.style.background = '#28a745';
-                setTimeout(() => {
-                    copyButton.textContent = 'Copy';
-                    copyButton.style.background = '';
-                }, 2000);
-            } catch (error) {
-                debug.error(`Failed to copy: ${error.message}`);
-                copyButton.textContent = 'Error';
-                copyButton.style.background = '#dc3545';
-            }
-        });
+        copyButton.addEventListener('click', () => this.handleCopyClick(copyButton, shortUrl));
 
         urlContainer.appendChild(urlText);
         urlContainer.appendChild(copyButton);
         container.appendChild(urlContainer);
 
-        // QR Code (if provided)
+        // Add QR code if provided
         if (qrUrl) {
             debug.log('Adding QR code to notification');
             const qrContainer = document.createElement('div');
@@ -184,23 +179,40 @@ class NotificationUI {
             container.appendChild(qrContainer);
         }
 
-        // Close button
+        // Add close button
         const closeButton = document.createElement('button');
         closeButton.className = 'close-btn';
         closeButton.innerHTML = '×';
-        closeButton.addEventListener('click', () => {
-            debug.log('Close button clicked');
-            this.hide();
-        });
+        closeButton.addEventListener('click', () => this.hide());
         container.appendChild(closeButton);
 
-        // Auto-hide after duration
+        // Set auto-hide timeout
         this.timeout = setTimeout(() => {
             debug.log('Auto-hiding notification');
             this.hide();
         }, duration);
     }
 
+    // Handles the copy button click
+    async handleCopyClick(button, text) {
+        debug.log('Copy button clicked');
+        try {
+            await navigator.clipboard.writeText(text);
+            const originalText = button.textContent;
+            button.textContent = 'Copied!';
+            button.style.background = '#28a745';
+            setTimeout(() => {
+                button.textContent = originalText;
+                button.style.background = '';
+            }, 2000);
+        } catch (error) {
+            debug.error('Failed to copy text:', error);
+            button.textContent = 'Error';
+            button.style.background = '#dc3545';
+        }
+    }
+
+    // Hides the notification with animation
     hide() {
         debug.log('Hiding notification');
         if (this.container) {
@@ -215,20 +227,17 @@ class NotificationUI {
     }
 }
 
-// Create notification UI instance
-const notificationUI = new NotificationUI();
-
-// Helper function to check if a string is a valid URL
+// Validates if a string is a valid URL
 function isValidUrl(text) {
     try {
-        new URL(text);
-        return text.startsWith('http://') || text.startsWith('https://');
+        const url = new URL(text);
+        return url.protocol === 'http:' || url.protocol === 'https:';
     } catch {
         return false;
     }
 }
 
-// Function to process selected text
+// Processes selected text if it's a valid URL
 async function processSelectedText() {
     const selection = window.getSelection().toString().trim();
     if (selection && isValidUrl(selection)) {
@@ -237,15 +246,18 @@ async function processSelectedText() {
     }
 }
 
-// Listen for copy events
-document.addEventListener('copy', (event) => {
+// Initialize NotificationUI
+const notificationUI = new NotificationUI();
+
+// Event Listeners
+document.addEventListener('copy', () => {
     debug.log('Copy event detected');
     processSelectedText();
 });
 
-// Listen for messages from background script
+// Handle messages from background script
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    debug.log(`Received message: ${message.type}`);
+    debug.log('Received message:', message);
 
     if (message.type === 'show_notification') {
         const { shortUrl, qrUrl, duration } = message.data;

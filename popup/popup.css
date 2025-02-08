@@ -1,4 +1,4 @@
-/* Base styles */
+/* Base Styles */
 * {
     margin: 0;
     padding: 0;
@@ -16,7 +16,7 @@ body {
     padding: 16px;
 }
 
-/* Navigation */
+/* Navigation Tabs */
 .nav {
     display: flex;
     gap: 8px;
@@ -98,6 +98,7 @@ body {
     margin-top: 8px;
 }
 
+/* Action Buttons */
 .history-item button {
     flex: 1;
     padding: 4px 8px;
@@ -114,6 +115,7 @@ body {
     background: #0056b3;
 }
 
+/* Empty State */
 .empty-state {
     text-align: center;
     color: #999;
@@ -121,7 +123,7 @@ body {
     font-size: 14px;
 }
 
-/* Settings */
+/* Settings Form */
 .settings-group {
     display: flex;
     flex-direction: column;
@@ -163,7 +165,7 @@ input[type="number"] {
     font-size: 13px;
 }
 
-/* Scrollbar styling */
+/* Scrollbar Styling */
 ::-webkit-scrollbar {
     width: 8px;
 }

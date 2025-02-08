@@ -1,76 +1,94 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AutoShorten & Scan Chrome Extension - URL shortener with QR code generation">
     <title>AutoShorten & Scan</title>
     <link rel="stylesheet" href="popup.css">
 </head>
+
 <body>
+    <!-- Main Container -->
     <div class="container">
-        <!-- Navigation -->
-        <div class="nav">
-            <button class="nav-btn active" data-tab="history">History</button>
-            <button class="nav-btn" data-tab="settings">Settings</button>
-        </div>
+        <!-- Navigation Tabs -->
+        <nav class="nav" role="navigation">
+            <button class="nav-btn active" data-tab="history" aria-selected="true">
+                History
+            </button>
+            <button class="nav-btn" data-tab="settings" aria-selected="false">
+                Settings
+            </button>
+        </nav>
 
         <!-- History Tab -->
-        <div class="tab-content active" id="history">
-            <div class="history-list">
+        <section class="tab-content active" id="history" role="tabpanel" aria-labelledby="history-tab">
+            <div class="history-list" role="list">
                 <!-- History items will be added here dynamically -->
-                <div class="empty-state">No history yet</div>
+                <div class="empty-state" role="status">No history yet</div>
             </div>
-        </div>
+        </section>
 
         <!-- Settings Tab -->
-        <div class="tab-content" id="settings">
-            <div class="settings-group">
+        <section class="tab-content" id="settings" role="tabpanel" aria-labelledby="settings-tab">
+            <form class="settings-group">
+                <!-- QR Code Settings -->
                 <label class="setting">
                     <span>Enable QR Code</span>
-                    <input type="checkbox" id="enableQr" checked>
+                    <input type="checkbox" id="enableQr" checked aria-label="Enable QR code generation">
                 </label>
 
                 <label class="setting">
                     <span>Use Original URL for QR</span>
-                    <input type="checkbox" id="useOriginalUrl">
+                    <input type="checkbox" id="useOriginalUrl" aria-label="Use original URL for QR code">
                 </label>
 
                 <label class="setting">
                     <span>QR Code Color</span>
-                    <input type="color" id="qrColor" value="#000000">
+                    <input type="color" id="qrColor" value="#000000" aria-label="QR code color">
                 </label>
 
                 <label class="setting">
                     <span>QR Background Color</span>
-                    <input type="color" id="qrBackground" value="#ffffff">
+                    <input type="color" id="qrBackground" value="#ffffff" aria-label="QR code background color">
                 </label>
 
+                <!-- Notification Settings -->
                 <label class="setting">
                     <span>Notification Duration (seconds)</span>
-                    <input type="number" id="notificationDuration" min="1" max="30" value="5">
+                    <input type="number" id="notificationDuration" min="1" max="60" value="40"
+                        aria-label="Notification duration in seconds">
                 </label>
 
+                <!-- Copy Settings -->
                 <label class="setting">
                     <span>Auto-copy Shortened URL</span>
-                    <input type="checkbox" id="autoCopy" checked>
+                    <input type="checkbox" id="autoCopy" checked aria-label="Automatically copy shortened URL">
                 </label>
-            </div>
-        </div>
+            </form>
+        </section>
     </div>
 
-    <!-- History item template -->
+    <!-- History Item Template -->
     <template id="history-item-template">
-        <div class="history-item">
+        <article class="history-item" role="listitem">
             <div class="url"></div>
             <div class="original-url"></div>
             <div class="timestamp"></div>
             <div class="actions">
-                <button class="copy-short">Copy Short URL</button>
-                <button class="copy-original">Copy Original</button>
+                <button class="copy-short" aria-label="Copy shortened URL">
+                    Copy Short URL
+                </button>
+                <button class="copy-original" aria-label="Copy original URL">
+                    Copy Original
+                </button>
             </div>
-        </div>
+        </article>
     </template>
 
+    <!-- Scripts -->
     <script src="popup.js"></script>
 </body>
+
 </html>

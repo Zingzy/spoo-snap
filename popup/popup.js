@@ -1,50 +1,59 @@
-// Debug helper
+// Debug logging utility
 const debug = {
-    log: (message) => {
-        console.log(`[Popup Debug] ${message}`);
+    log: (message, data) => {
+        console.log(`[Popup Debug] ${message}`, data || '');
     },
-    error: (message) => {
-        console.error(`[Popup Error] ${message}`);
+    error: (message, error) => {
+        console.error(`[Popup Error] ${message}`, error || '');
     }
 };
 
-// UI Manager
+/**
+    * PopupUI Class
+    * Handles the extension popup interface
+ */
 class PopupUI {
     constructor() {
+        // Initialize properties
         this.currentTab = 'history';
         this.historyList = document.querySelector('.history-list');
         this.template = document.getElementById('history-item-template');
-        
+
+        // Set up UI
         this.setupNavigation();
         this.setupEventListeners();
         this.loadContent();
+
         debug.log('PopupUI initialized');
     }
 
+    // Sets up navigation tab handlers
     setupNavigation() {
         const navBtns = document.querySelectorAll('.nav-btn');
         navBtns.forEach(btn => {
             btn.addEventListener('click', () => {
-                debug.log(`Navigation clicked: ${btn.dataset.tab}`);
-                this.switchTab(btn.dataset.tab);
+                const tabName = btn.dataset.tab;
+                debug.log('Navigation clicked:', tabName);
+                this.switchTab(tabName);
             });
         });
     }
 
+    // Sets up event listeners for history items and settings
     setupEventListeners() {
         // Event delegation for history item actions
         this.historyList.addEventListener('click', async (event) => {
-            const historyItem = event.target.closest('.history-item');
+            const target = event.target;
+            if (!target.matches('button')) return;
+
+            const historyItem = target.closest('.history-item');
             if (!historyItem) return;
 
             const index = Array.from(this.historyList.children).indexOf(historyItem);
             if (index === -1) return;
 
-            if (event.target.classList.contains('copy-short')) {
-                await this.copyUrl(index, false);
-            } else if (event.target.classList.contains('copy-original')) {
-                await this.copyUrl(index, true);
-            }
+            const isOriginal = target.classList.contains('copy-original');
+            await this.copyUrl(index, isOriginal);
         });
 
         // Settings change handlers
@@ -65,8 +74,10 @@ class PopupUI {
         });
     }
 
+    // Switches between history and settings tabs
     switchTab(tabName) {
-        debug.log(`Switching to tab: ${tabName}`);
+        debug.log('Switching to tab:', tabName);
+
         // Update navigation buttons
         document.querySelectorAll('.nav-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.tab === tabName);
@@ -80,14 +91,20 @@ class PopupUI {
         this.currentTab = tabName;
     }
 
+    // Loads initial content (history and settings)
     async loadContent() {
         debug.log('Loading content');
-        await Promise.all([
-            this.loadHistory(),
-            this.loadSettings()
-        ]);
+        try {
+            await Promise.all([
+                this.loadHistory(),
+                this.loadSettings()
+            ]);
+        } catch (error) {
+            debug.error('Failed to load content:', error);
+        }
     }
 
+    // Loads and displays URL history
     async loadHistory() {
         debug.log('Loading history');
         const history = await this.getHistory();
@@ -102,22 +119,20 @@ class PopupUI {
         history.forEach(item => {
             const historyItem = this.template.content.cloneNode(true);
 
-            const urlDiv = historyItem.querySelector('.url');
-            const originalUrlDiv = historyItem.querySelector('.original-url');
-            const timestampDiv = historyItem.querySelector('.timestamp');
-
-            urlDiv.textContent = item.shortUrl;
-            originalUrlDiv.textContent = item.originalUrl;
-            timestampDiv.textContent = this.formatDate(item.timestamp);
+            // Set up item content
+            historyItem.querySelector('.url').textContent = item.shortUrl;
+            historyItem.querySelector('.original-url').textContent = item.originalUrl;
+            historyItem.querySelector('.timestamp').textContent = this.formatDate(item.timestamp);
 
             this.historyList.appendChild(historyItem);
         });
     }
 
+    // Loads and applies user settings
     async loadSettings() {
         debug.log('Loading settings');
         const settings = await this.getSettings();
-        
+
         // Update UI with settings
         document.getElementById('enableQr').checked = settings.enableQr;
         document.getElementById('useOriginalUrl').checked = settings.useOriginalUrl;
@@ -127,47 +142,58 @@ class PopupUI {
         document.getElementById('autoCopy').checked = settings.autoCopy;
     }
 
+    // Updates and saves user settings
     async updateSettings() {
         debug.log('Updating settings');
-        const settings = {
-            enableQr: document.getElementById('enableQr').checked,
-            useOriginalUrl: document.getElementById('useOriginalUrl').checked,
-            qrColor: this.hexToRgb(document.getElementById('qrColor').value),
-            qrBackground: this.hexToRgb(document.getElementById('qrBackground').value),
-            notificationDuration: document.getElementById('notificationDuration').value * 1000,
-            autoCopy: document.getElementById('autoCopy').checked
-        };
+        try {
+            const settings = {
+                enableQr: document.getElementById('enableQr').checked,
+                useOriginalUrl: document.getElementById('useOriginalUrl').checked,
+                qrColor: this.hexToRgb(document.getElementById('qrColor').value),
+                qrBackground: this.hexToRgb(document.getElementById('qrBackground').value),
+                notificationDuration: document.getElementById('notificationDuration').value * 1000,
+                autoCopy: document.getElementById('autoCopy').checked
+            };
 
-        await chrome.storage.local.set({ settings });
-        debug.log('Settings updated successfully');
+            await chrome.storage.local.set({ settings });
+            debug.log('Settings updated successfully:', settings);
+        } catch (error) {
+            debug.error('Failed to update settings:', error);
+        }
     }
 
+    // Copies URL from history item
     async copyUrl(index, original) {
         const history = await this.getHistory();
         if (index < 0 || index >= history.length) return;
 
         const url = original ? history[index].originalUrl : history[index].shortUrl;
-        debug.log(`Copying ${original ? 'original' : 'short'} URL: ${url}`);
-        
+        debug.log('Copying URL:', url);
+
         try {
             await navigator.clipboard.writeText(url);
             const button = original ?
                 this.historyList.children[index].querySelector('.copy-original') :
                 this.historyList.children[index].querySelector('.copy-short');
 
-            const originalText = button.textContent;
-            button.textContent = 'Copied!';
-            button.style.background = '#28a745';
-            setTimeout(() => {
-                button.textContent = originalText;
-                button.style.background = '#007bff';
-            }, 2000);
+            this.showCopyFeedback(button);
         } catch (error) {
-            debug.error(`Failed to copy URL: ${error.message}`);
+            debug.error('Failed to copy URL:', error);
         }
     }
 
-    // Helper methods
+    // Shows visual feedback for copy operation
+    showCopyFeedback(button) {
+        const originalText = button.textContent;
+        button.textContent = 'Copied!';
+        button.style.background = '#28a745';
+
+        setTimeout(() => {
+            button.textContent = originalText;
+            button.style.background = '#007bff';
+        }, 2000);
+    }
+
     async getHistory() {
         const result = await chrome.storage.local.get('history');
         return result.history || [];
@@ -180,7 +206,7 @@ class PopupUI {
             useOriginalUrl: false,
             qrColor: '(0,0,0)',
             qrBackground: '(255,255,255)',
-            notificationDuration: 5000,
+            notificationDuration: 30000,
             autoCopy: true
         };
     }

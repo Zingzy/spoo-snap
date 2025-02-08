@@ -1,17 +1,20 @@
-// Debug helper
+// Debug logging utility
 const debug = {
-    log: (message) => {
-        console.log(`[Debug] ${message}`);
+    log: (message, data) => {
+        console.log(`[Debug] ${message}`, data || '');
     },
-    error: (message) => {
-        console.error(`[Error] ${message}`);
+    error: (message, error) => {
+        console.error(`[Error] ${message}`, error || '');
     }
 };
 
-// API client for spoo.me
+/**
+    * spoo.me API Client
+    * Handles URL shortening operations
+ */
 class SpooAPI {
     static async shortenUrl(url) {
-        debug.log(`Attempting to shorten URL: ${url}`);
+        debug.log('Shortening URL:', url);
         const data = new URLSearchParams();
         data.append('url', url);
 
@@ -30,16 +33,19 @@ class SpooAPI {
             }
 
             const result = await response.json();
-            debug.log(`Successfully shortened URL: ${result.short_url}`);
+            debug.log('URL shortened successfully:', result.short_url);
             return result.short_url;
         } catch (error) {
-            debug.error(`Failed to shorten URL: ${error.message}`);
+            debug.error('Failed to shorten URL:', error);
             throw error;
         }
     }
 }
 
-// API client for qr.spoo.me
+/**
+    * qr.spoo.me API Client
+    * Handles QR code generation
+ */
 class QrAPI {
     static generateQrCodeUrl(text, fill = '(0,0,0)', back = '(255,255,255)') {
         const params = new URLSearchParams({
@@ -48,19 +54,22 @@ class QrAPI {
             back: encodeURIComponent(back)
         });
         const url = `https://qr.spoo.me/classic?${params.toString()}`;
-        debug.log(`Generating QR code with URL: ${url}`);
+        debug.log('Generated QR code URL:', url);
         return url;
     }
 }
 
-// Settings manager
+/**
+    * Settings Manager
+    * Handles extension settings storage and retrieval
+ */
 class SettingsManager {
     static defaultSettings = {
         enableQr: true,
         useOriginalUrl: false,
         qrColor: '(0,0,0)',
         qrBackground: '(255,255,255)',
-        notificationDuration: 30000, // Increased to 30 seconds
+        notificationDuration: 30000,
         autoCopy: true
     };
 
@@ -71,16 +80,23 @@ class SettingsManager {
     }
 
     static async saveSettings(settings) {
-        debug.log('Saving settings');
+        debug.log('Saving settings:', settings);
         await chrome.storage.local.set({ settings });
     }
 }
 
-// History manager
+/**
+    * History Manager
+    * Handles URL history storage and retrieval
+ */
 class HistoryManager {
+    // Maximum number of history items to keep
+    static MAX_HISTORY_ITEMS = 50;
+
     static async addToHistory(originalUrl, shortUrl, qrUrl) {
-        debug.log('Adding URL to history');
+        debug.log('Adding to history:', { originalUrl, shortUrl });
         const history = await this.getHistory();
+
         history.unshift({
             originalUrl,
             shortUrl,
@@ -88,8 +104,7 @@ class HistoryManager {
             timestamp: new Date().toISOString()
         });
 
-        // Keep only last 50 items
-        history.splice(50);
+        history.splice(this.MAX_HISTORY_ITEMS);
         await chrome.storage.local.set({ history });
     }
 
@@ -100,51 +115,64 @@ class HistoryManager {
     }
 }
 
-// URL processing
+
+// URL Processing Functions
 async function processUrl(url) {
     debug.log('Processing URL:', url);
 
     try {
+        // Get user settings
         const settings = await SettingsManager.getSettings();
-        const shortUrl = await SpooAPI.shortenUrl(url);
-        const qrUrl = settings.enableQr ?
-            QrAPI.generateQrCodeUrl(settings.useOriginalUrl ? url : shortUrl, settings.qrColor, settings.qrBackground) :
-            null;
 
-        // Store in history
+        // Shorten URL
+        const shortUrl = await SpooAPI.shortenUrl(url);
+
+        // Generate QR code if enabled
+        const qrUrl = settings.enableQr ?
+            QrAPI.generateQrCodeUrl(
+                settings.useOriginalUrl ? url : shortUrl,
+                settings.qrColor,
+                settings.qrBackground
+            ) : null;
+
+        // Save to history
         await HistoryManager.addToHistory(url, shortUrl, qrUrl);
 
-        // Copy shortened URL to clipboard
+        // Get active tab for notifications
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        if (tab && !tab.url.startsWith('chrome://')) {
+        if (!tab || tab.url.startsWith('chrome://')) {
+            debug.log('No suitable tab found for notification');
+            return;
+        }
+
+        // Copy shortened URL if enabled
+        if (settings.autoCopy) {
             await chrome.scripting.executeScript({
                 target: { tabId: tab.id },
                 func: (textToCopy) => {
-                    navigator.clipboard.writeText(textToCopy);
+                    navigator.clipboard.writeText(textToCopy)
+                        .then(() => console.log('[Debug] URL copied to clipboard'))
+                        .catch(error => console.error('[Error] Failed to copy URL:', error));
                 },
                 args: [shortUrl]
             });
-            debug.log('Shortened URL copied to clipboard');
         }
 
-        // Show notification in the active tab
-        if (tab && !tab.url.startsWith('chrome://')) {
-            await chrome.tabs.sendMessage(tab.id, {
-                type: 'show_notification',
-                data: {
-                    shortUrl,
-                    qrUrl,
-                    duration: settings.notificationDuration
-                }
-            });
-            debug.log('Notification sent to active tab');
-        }
+        // Show notification
+        await chrome.tabs.sendMessage(tab.id, {
+            type: 'show_notification',
+            data: {
+                shortUrl,
+                qrUrl,
+                duration: settings.notificationDuration
+            }
+        });
     } catch (error) {
-        debug.error(`Error processing URL: ${error.message}`);
+        debug.error('Failed to process URL:', error);
     }
 }
 
-// Initialize extension
+// Extension Initialization
 chrome.runtime.onInstalled.addListener(async () => {
     debug.log('Extension installed/updated');
 
@@ -162,6 +190,8 @@ chrome.runtime.onInstalled.addListener(async () => {
     });
 });
 
+// Event Listeners
+
 // Handle context menu clicks
 chrome.contextMenus.onClicked.addListener((info, tab) => {
     if (info.menuItemId === 'shortenLink' && info.linkUrl) {
@@ -170,12 +200,11 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     }
 });
 
-// Listen for messages from content scripts
+// Handle messages from content scripts
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    debug.log(`Received message: ${message.type}`);
+    debug.log('Received message:', message);
 
     if (message.type === 'process_url') {
-        debug.log('Processing URL from content script:', message.url);
         processUrl(message.url);
         sendResponse({ success: true });
     }
