@@ -86,7 +86,8 @@ class PopupUI {
             'qrBackground',
             'notificationDuration',
             'autoCopy',
-            'themeSelect'
+            'themeSelect',
+            'stealthMode'
         ];
 
         settingsElements.forEach(id => {
@@ -164,6 +165,7 @@ class PopupUI {
         document.getElementById('notificationDuration').value = settings.notificationDuration / 1000;
         document.getElementById('autoCopy').checked = settings.autoCopy;
         document.getElementById('themeSelect').value = settings.theme;
+        document.getElementById('stealthMode').checked = settings.stealthMode;
         this.applyTheme(settings.theme);
     }
 
@@ -178,7 +180,8 @@ class PopupUI {
                 qrBackground: this.hexToRgb(document.getElementById('qrBackground').value),
                 notificationDuration: document.getElementById('notificationDuration').value * 1000,
                 autoCopy: document.getElementById('autoCopy').checked,
-                theme: document.getElementById('themeSelect').value
+                theme: document.getElementById('themeSelect').value,
+                stealthMode: document.getElementById('stealthMode').checked
             };
 
             await chrome.storage.local.set({ settings });
@@ -239,7 +242,8 @@ class PopupUI {
             qrBackground: '(255,255,255)',
             notificationDuration: 30000,
             autoCopy: true,
-            theme: 'light'
+            theme: 'light',
+            stealthMode: false
         };
     }
 

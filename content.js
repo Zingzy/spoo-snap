@@ -170,6 +170,16 @@ class NotificationUI {
     async show(shortUrl, qrUrl, duration) {
         debug.log('Showing notification', { shortUrl, qrUrl, duration });
 
+        // Get current settings to check stealth mode
+        const result = await chrome.storage.local.get('settings');
+        const settings = result.settings || {};
+
+        // Skip showing notification if in stealth mode
+        if (settings.stealthMode) {
+            debug.log('Stealth mode active, skipping notification');
+            return;
+        }
+
         // Clear existing timeout if any
         if (this.timeout) {
             clearTimeout(this.timeout);
