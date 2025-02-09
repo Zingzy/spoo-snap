@@ -275,25 +275,59 @@ class NotificationUI {
     }
 }
 
-// Validates if a string is a valid URL
-function isValidUrl(text) {
-    try {
-        const url = new URL(text);
-        return url.protocol === 'http:' || url.protocol === 'https:';
-    } catch {
-        return false;
+// URL validation and processing utilities
+const urlUtils = {
+    // Common TLDs for validating domain-like strings
+    commonTLDs: ['com', 'org', 'net', 'edu', 'gov', 'io', 'me', 'dev', 'app'],
+
+    // Matches domain-like patterns (e.g., example.com, www.example.com)
+    domainPattern: /^((?:www\.)?[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*\.(?:[a-zA-Z]{2,}))(?:\/[^\s]*)?$/,
+
+    // Validates if a string is a valid URL with protocol
+    isValidUrlWithProtocol(text) {
+        try {
+            const url = new URL(text);
+            return url.protocol === 'http:' || url.protocol === 'https:';
+        } catch {
+            return false;
+        }
+    },
+
+    // Validates if a string is a potential passive URL
+    isPassiveUrl(text) {
+        if (this.isValidUrlWithProtocol(text)) return false;
+        return this.domainPattern.test(text);
+    },
+
+    // Formats URL with protocol if needed
+    formatUrl(text) {
+        if (this.isValidUrlWithProtocol(text)) return text;
+        if (this.isPassiveUrl(text)) return `https://${text}`;
+        return text;
     }
+};
+
+// Validates if a string is a valid URL or passive URL
+function isValidUrl(text) {
+    return urlUtils.isValidUrlWithProtocol(text) || urlUtils.isPassiveUrl(text);
 }
 
-// Processes selected text if it's a valid URL
+// Processes selected text if it's a valid URL or passive URL
 async function processSelectedText() {
     try {
         const selection = window.getSelection().toString().trim();
         if (selection && isValidUrl(selection)) {
-            debug.log('Valid URL detected in selection:', selection);
+            debug.log('URL detected in selection:', selection);
+            const formattedUrl = urlUtils.formatUrl(selection);
+            debug.log('Formatted URL:', formattedUrl);
+
             // Check if extension context is still valid
             if (chrome.runtime?.id) {
-                await chrome.runtime.sendMessage({ type: 'process_url', url: selection });
+                await chrome.runtime.sendMessage({
+                    type: 'process_url',
+                    url: formattedUrl,
+                    originalText: selection
+                });
             } else {
                 debug.error('Extension context invalidated');
                 // Refresh the page to reinitialize the extension context

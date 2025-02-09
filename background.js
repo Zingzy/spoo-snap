@@ -129,19 +129,19 @@ class HistoryManager {
 
 
 // URL Processing Functions
-async function processUrl(url) {
-    debug.log('Processing URL:', url);
+async function processUrl(url, originalText) {
+    debug.log('Processing URL:', { url, originalText });
 
     try {
         // Get user settings
         const settings = await SettingsManager.getSettings();
 
-        // Shorten URL
+        // Shorten URL with the processed URL
         const shortUrl = await SpooAPI.shortenUrl(url);
 
-        // Generate QR code if enabled
+        // For QR code, use the original text if it's a passive URL, otherwise use the processed URL
         const qrUrl = settings.enableQr ? QrAPI.generateQrCodeUrl(
-            settings.useOriginalUrl ? url : shortUrl,
+            settings.useOriginalUrl ? (originalText || url) : shortUrl,
             settings.qrStyle,
             settings.qrStyle === 'gradient' ? {
                 gradient1: settings.qrGradient1,
@@ -152,8 +152,8 @@ async function processUrl(url) {
             }
         ) : null;
 
-        // Save to history
-        await HistoryManager.addToHistory(url, shortUrl, qrUrl);
+        // Save both original and processed URLs to history
+        await HistoryManager.addToHistory(originalText || url, shortUrl, qrUrl);
 
         // Get active tab for notifications
         const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -209,11 +209,41 @@ chrome.runtime.onInstalled.addListener(async () => {
 
 // Event Listeners
 
+// URL Formatting Utils
+const urlUtils = {
+    // Matches domain-like patterns (e.g., example.com, www.example.com)
+    domainPattern: /^((?:www\.)?[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*\.(?:[a-zA-Z]{2,}))(?:\/[^\s]*)?$/,
+
+    // Validates if a string is a valid URL with protocol
+    isValidUrlWithProtocol(text) {
+        try {
+            const url = new URL(text);
+            return url.protocol === 'http:' || url.protocol === 'https:';
+        } catch {
+            return false;
+        }
+    },
+
+    // Validates if a string is a potential passive URL
+    isPassiveUrl(text) {
+        if (this.isValidUrlWithProtocol(text)) return false;
+        return this.domainPattern.test(text);
+    },
+
+    // Formats URL with protocol if needed
+    formatUrl(text) {
+        if (this.isValidUrlWithProtocol(text)) return text;
+        if (this.isPassiveUrl(text)) return `https://${text}`;
+        return text;
+    }
+};
+
 // Handle context menu clicks
 chrome.contextMenus.onClicked.addListener((info, tab) => {
     if (info.menuItemId === 'shortenLink' && info.linkUrl) {
         debug.log('Context menu: shortening link:', info.linkUrl);
-        processUrl(info.linkUrl);
+        const formattedUrl = urlUtils.formatUrl(info.linkUrl);
+        processUrl(formattedUrl, info.linkUrl);
     }
 });
 
@@ -222,7 +252,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     debug.log('Received message:', message);
 
     if (message.type === 'process_url') {
-        processUrl(message.url);
+        processUrl(message.url, message.originalText);
         sendResponse({ success: true });
     }
 
