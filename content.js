@@ -180,65 +180,79 @@ class NotificationUI {
             return;
         }
 
-        // Clear existing timeout if any
-        if (this.timeout) {
-            clearTimeout(this.timeout);
-            this.timeout = null;
-        }
+        return new Promise(resolve => {
+            // Clear existing timeout if any
+            if (this.timeout) {
+                clearTimeout(this.timeout);
+                this.timeout = null;
+            }
 
-        const container = this.container || this.createContainer();
-        container.innerHTML = '';
+            const container = this.container || this.createContainer();
+            container.innerHTML = '';
 
-        // Add title
-        const title = document.createElement('div');
-        title.className = 'title';
-        title.textContent = 'URL Shortened!';
-        container.appendChild(title);
+            // Add title
+            const title = document.createElement('div');
+            title.className = 'title';
+            title.textContent = 'URL Shortened!';
+            container.appendChild(title);
 
-        // Add URL container
-        const urlContainer = document.createElement('div');
-        urlContainer.className = 'url-container';
+            // Add URL container
+            const urlContainer = document.createElement('div');
+            urlContainer.className = 'url-container';
 
-        const urlText = document.createElement('div');
-        urlText.className = 'url-text';
-        urlText.textContent = shortUrl;
+            const urlText = document.createElement('div');
+            urlText.className = 'url-text';
+            urlText.textContent = shortUrl;
 
-        const copyButton = document.createElement('button');
-        copyButton.className = 'copy-btn';
-        copyButton.textContent = 'Copy';
-        copyButton.addEventListener('click', () => this.handleCopyClick(copyButton, shortUrl));
+            const copyButton = document.createElement('button');
+            copyButton.className = 'copy-btn';
+            copyButton.textContent = 'Copy';
+            copyButton.addEventListener('click', () => this.handleCopyClick(copyButton, shortUrl));
 
-        urlContainer.appendChild(urlText);
-        urlContainer.appendChild(copyButton);
-        container.appendChild(urlContainer);
+            urlContainer.appendChild(urlText);
+            urlContainer.appendChild(copyButton);
+            container.appendChild(urlContainer);
 
-        // Add QR code if provided
-        if (qrUrl) {
-            debug.log('Adding QR code to notification');
-            const qrContainer = document.createElement('div');
-            qrContainer.className = 'qr-container';
+            // Add QR code if provided
+            if (qrUrl) {
+                debug.log('Adding QR code to notification');
+                const qrContainer = document.createElement('div');
+                qrContainer.className = 'qr-container';
 
-            const qrImage = document.createElement('img');
-            qrImage.className = 'qr-code';
-            qrImage.src = qrUrl;
-            qrImage.alt = 'QR Code';
+                const qrImage = document.createElement('img');
+                qrImage.className = 'qr-code';
+                qrImage.src = qrUrl;
+                qrImage.alt = 'QR Code';
 
-            qrContainer.appendChild(qrImage);
-            container.appendChild(qrContainer);
-        }
+                qrContainer.appendChild(qrImage);
+                container.appendChild(qrContainer);
+            }
 
-        // Add close button
-        const closeButton = document.createElement('button');
-        closeButton.className = 'close-btn';
-        closeButton.innerHTML = '×';
-        closeButton.addEventListener('click', () => this.hide());
-        container.appendChild(closeButton);
+            // Add close button
+            const closeButton = document.createElement('button');
+            closeButton.className = 'close-btn';
+            closeButton.innerHTML = '×';
+            closeButton.addEventListener('click', () => this.hide());
+            container.appendChild(closeButton);
 
-        // Set auto-hide timeout
-        this.timeout = setTimeout(() => {
-            debug.log('Auto-hiding notification');
-            this.hide();
-        }, duration);
+            // Set auto-hide timeout
+            this.timeout = setTimeout(() => {
+                debug.log('Auto-hiding notification');
+                this.hide();
+            }, duration);
+
+            // Wait for the next frame to ensure DOM updates and animations are properly sequenced
+            requestAnimationFrame(() => {
+                // Resolve once the showing animation starts
+                container.addEventListener('transitionend', () => {
+                    resolve();
+                }, { once: true });
+
+                // Force reflow and trigger animation
+                container.offsetHeight;
+                container.classList.add('visible');
+            });
+        });
     }
 
     // Handles the copy button click
@@ -263,15 +277,20 @@ class NotificationUI {
     // Hides the notification with animation
     hide() {
         debug.log('Hiding notification');
-        if (this.container) {
-            this.container.classList.remove('visible');
-            setTimeout(() => {
-                if (this.container && this.container.parentNode) {
-                    this.container.parentNode.removeChild(this.container);
-                    this.container = null;
-                }
-            }, 300);
-        }
+        return new Promise(resolve => {
+            if (this.container) {
+                this.container.classList.remove('visible');
+                setTimeout(() => {
+                    if (this.container && this.container.parentNode) {
+                        this.container.parentNode.removeChild(this.container);
+                        this.container = null;
+                    }
+                    resolve();
+                }, 300);
+            } else {
+                resolve();
+            }
+        });
     }
 }
 
@@ -366,22 +385,24 @@ document.addEventListener('copy', () => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     debug.log('Received message:', message);
 
-    try {
-        if (message.type === 'show_notification') {
-            const { shortUrl, qrUrl, duration } = message.data;
-            // Remove any existing notification before showing new one
-            if (notificationUI.container) {
-                notificationUI.hide();
+    (async () => {
+        try {
+            if (message.type === 'show_notification') {
+                const { shortUrl, qrUrl, duration } = message.data;
+                // Remove any existing notification before showing new one
+                if (notificationUI.container) {
+                    await notificationUI.hide();
+                }
+                await notificationUI.show(shortUrl, qrUrl, duration);
+                sendResponse({ success: true });
             }
-            notificationUI.show(shortUrl, qrUrl, duration);
-            sendResponse({ success: true });
+        } catch (error) {
+            debug.error('Error processing message:', error);
+            sendResponse({ success: false, error: error.message });
         }
-    } catch (error) {
-        debug.error('Error processing message:', error);
-        sendResponse({ success: false, error: error.message });
-    }
+    })();
 
-    return true;
+    return true; // Keep the message channel open for the async response
 });
 
 // Handle port disconnection
