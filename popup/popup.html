@@ -48,14 +48,38 @@
                 </label>
 
                 <label class="setting">
-                    <span>QR Code Color</span>
-                    <input type="color" id="qrColor" value="#000000" aria-label="QR code color">
+                    <span>QR Code Style</span>
+                    <select id="qrStyle" aria-label="Select QR code style">
+                        <option value="classic">Classic</option>
+                        <option value="gradient">Gradient</option>
+                    </select>
                 </label>
 
-                <label class="setting">
-                    <span>QR Background Color</span>
-                    <input type="color" id="qrBackground" value="#ffffff" aria-label="QR code background color">
-                </label>
+                <!-- Classic QR settings -->
+                <div id="classicQrSettings">
+                    <label class="setting">
+                        <span>QR Fill Color</span>
+                        <input type="color" id="qrColor" value="#000000" aria-label="QR fill color">
+                    </label>
+
+                    <label class="setting">
+                        <span>QR Background Color</span>
+                        <input type="color" id="qrBackground" value="#ffffff" aria-label="QR code background color">
+                    </label>
+                </div>
+
+                <!-- Gradient QR settings -->
+                <div id="gradientQrSettings" style="display: none;">
+                    <label class="setting">
+                        <span>QR Gradient Color 1</span>
+                        <input type="color" id="qrGradient1" value="#758156" aria-label="QR code gradient color 1">
+                    </label>
+
+                    <label class="setting">
+                        <span>QR Gradient Color 2</span>
+                        <input type="color" id="qrGradient2" value="#67AF26" aria-label="QR code gradient color 2">
+                    </label>
+                </div>
 
                 <!-- Notification Settings -->
                 <label class="setting">

@@ -60,6 +60,12 @@ class PopupUI {
 
     // Sets up event listeners for history items and settings
     setupEventListeners() {
+        // QR style change handler
+        const qrStyleSelect = document.getElementById('qrStyle');
+        qrStyleSelect.addEventListener('change', (event) => {
+            this.toggleQrSettings(event.target.value);
+        });
+
         // Event delegation for history item actions
         this.historyList.addEventListener('click', async (event) => {
             const target = event.target;
@@ -83,8 +89,11 @@ class PopupUI {
         const settingsElements = [
             'enableQr',
             'useOriginalUrl',
+            'qrStyle',
             'qrColor',
             'qrBackground',
+            'qrGradient1',
+            'qrGradient2',
             'notificationDuration',
             'autoCopy',
             'themeSelect',
@@ -161,12 +170,18 @@ class PopupUI {
         // Update UI with settings
         document.getElementById('enableQr').checked = settings.enableQr;
         document.getElementById('useOriginalUrl').checked = settings.useOriginalUrl;
+        document.getElementById('qrStyle').value = settings.qrStyle || 'classic';
         document.getElementById('qrColor').value = this.rgbToHex(settings.qrColor);
         document.getElementById('qrBackground').value = this.rgbToHex(settings.qrBackground);
+        document.getElementById('qrGradient1').value = this.rgbToHex(settings.qrGradient1);
+        document.getElementById('qrGradient2').value = this.rgbToHex(settings.qrGradient2);
         document.getElementById('notificationDuration').value = settings.notificationDuration / 1000;
         document.getElementById('autoCopy').checked = settings.autoCopy;
         document.getElementById('themeSelect').value = settings.theme;
         document.getElementById('stealthMode').checked = settings.stealthMode;
+
+        // Show/hide QR settings based on style
+        this.toggleQrSettings(settings.qrStyle);
         this.applyTheme(settings.theme);
     }
 
@@ -177,8 +192,11 @@ class PopupUI {
             const settings = {
                 enableQr: document.getElementById('enableQr').checked,
                 useOriginalUrl: document.getElementById('useOriginalUrl').checked,
+                qrStyle: document.getElementById('qrStyle').value,
                 qrColor: this.hexToRgb(document.getElementById('qrColor').value),
                 qrBackground: this.hexToRgb(document.getElementById('qrBackground').value),
+                qrGradient1: this.hexToRgb(document.getElementById('qrGradient1').value),
+                qrGradient2: this.hexToRgb(document.getElementById('qrGradient2').value),
                 notificationDuration: document.getElementById('notificationDuration').value * 1000,
                 autoCopy: document.getElementById('autoCopy').checked,
                 theme: document.getElementById('themeSelect').value,
@@ -239,13 +257,32 @@ class PopupUI {
         return result.settings || {
             enableQr: true,
             useOriginalUrl: false,
+            qrStyle: 'classic',
             qrColor: '(0,0,0)',
             qrBackground: '(255,255,255)',
+            qrGradient1: '(117,129,86)',
+            qrGradient2: '(103,175,38)',
             notificationDuration: 30000,
             autoCopy: true,
             theme: 'light',
             stealthMode: false
         };
+    }
+
+    // Toggle between classic and gradient QR settings
+    toggleQrSettings(style) {
+        const classicSettings = document.getElementById('classicQrSettings');
+        const gradientSettings = document.getElementById('gradientQrSettings');
+
+        debug.log('Toggling QR settings for style:', style);
+
+        if (style === 'gradient') {
+            classicSettings.style.display = 'none';
+            gradientSettings.style.display = 'block';
+        } else {
+            classicSettings.style.display = 'block';
+            gradientSettings.style.display = 'none';
+        }
     }
 
     formatDate(timestamp) {

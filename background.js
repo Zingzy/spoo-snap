@@ -47,13 +47,22 @@ class SpooAPI {
     * Handles QR code generation
  */
 class QrAPI {
-    static generateQrCodeUrl(text, fill = '(0,0,0)', back = '(255,255,255)') {
+    static generateQrCodeUrl(text, style = 'classic', colors = {}) {
         const params = new URLSearchParams({
-            text: encodeURIComponent(text),
-            fill: encodeURIComponent(fill),
-            back: encodeURIComponent(back)
+            text: encodeURIComponent(text)
         });
-        const url = `https://qr.spoo.me/classic?${params.toString()}`;
+
+        const endpoint = style === 'gradient' ? 'gradient' : 'classic';
+
+        if (style === 'gradient') {
+            params.append('gradient1', encodeURIComponent(colors.gradient1 || '(117,129,86)'));
+            params.append('gradient2', encodeURIComponent(colors.gradient2 || '(103,175,38)'));
+        } else {
+            params.append('fill', encodeURIComponent(colors.fill || '(0,0,0)'));
+            params.append('back', encodeURIComponent(colors.back || '(255,255,255)'));
+        }
+
+        const url = `https://qr.spoo.me/${endpoint}?${params.toString()}`;
         debug.log('Generated QR code URL:', url);
         return url;
     }
@@ -67,8 +76,11 @@ class SettingsManager {
     static defaultSettings = {
         enableQr: true,
         useOriginalUrl: false,
+        qrStyle: 'classic',
         qrColor: '(0,0,0)',
         qrBackground: '(255,255,255)',
+        qrGradient1: '(117,129,86)',
+        qrGradient2: '(103,175,38)',
         notificationDuration: 30000,
         autoCopy: true
     };
@@ -128,12 +140,17 @@ async function processUrl(url) {
         const shortUrl = await SpooAPI.shortenUrl(url);
 
         // Generate QR code if enabled
-        const qrUrl = settings.enableQr ?
-            QrAPI.generateQrCodeUrl(
-                settings.useOriginalUrl ? url : shortUrl,
-                settings.qrColor,
-                settings.qrBackground
-            ) : null;
+        const qrUrl = settings.enableQr ? QrAPI.generateQrCodeUrl(
+            settings.useOriginalUrl ? url : shortUrl,
+            settings.qrStyle,
+            settings.qrStyle === 'gradient' ? {
+                gradient1: settings.qrGradient1,
+                gradient2: settings.qrGradient2
+            } : {
+                fill: settings.qrColor,
+                back: settings.qrBackground
+            }
+        ) : null;
 
         // Save to history
         await HistoryManager.addToHistory(url, shortUrl, qrUrl);
