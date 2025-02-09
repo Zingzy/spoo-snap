@@ -25,6 +25,7 @@ class PopupUI {
         // Set up UI
         this.setupNavigation();
         this.setupEventListeners();
+        this.setupClearHistory();
         this.loadContent();
         this.initializeTheme();
 
@@ -290,6 +291,41 @@ class PopupUI {
         const urlId = shortUrl.split('/').pop();
         const analyticsUrl = `https://spoo.me/stats/${urlId}`;
         chrome.tabs.create({ url: analyticsUrl });
+    }
+
+    setupClearHistory() {
+        debug.log('Setting up clear history functionality');
+        const clearBtn = document.querySelector('.clear-history-btn');
+        const modal = document.getElementById('clearConfirmModal');
+        const modalCancelBtn = modal.querySelector('.cancel');
+        const modalConfirmBtn = modal.querySelector('.confirm');
+
+        clearBtn.addEventListener('click', () => {
+            debug.log('Clear history button clicked');
+            modal.hidden = false;
+        });
+
+        modalCancelBtn.addEventListener('click', () => {
+            debug.log('Clear history cancelled');
+            modal.hidden = true;
+        });
+
+        modalConfirmBtn.addEventListener('click', async () => {
+            debug.log('Clear history confirmed');
+            await this.clearHistory();
+            modal.hidden = true;
+        });
+    }
+
+    async clearHistory() {
+        debug.log('Clearing history');
+        try {
+            await chrome.storage.local.set({ history: [] });
+            this.loadHistory(); // Refresh the history view
+            debug.log('History cleared successfully');
+        } catch (error) {
+            debug.error('Failed to clear history:', error);
+        }
     }
 }
 

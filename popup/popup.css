@@ -180,6 +180,101 @@ body {
     color: var(--text-primary);
 }
 
+/* Clear History Button and Header */
+.history-header {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 12px;
+}
+
+.clear-history-btn {
+    background: var(--btn-primary-bg);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background-color 0.2s;
+}
+
+.clear-history-btn:hover {
+    background: var(--btn-primary-hover);
+}
+
+/* Modal Styles */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.125);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.modal[hidden] {
+    display: none;
+}
+
+.modal-content {
+    background: var(--bg-primary);
+    padding: 20px;
+    border-radius: 8px;
+    max-width: 280px;
+    text-align: center;
+}
+
+.modal-content h2 {
+    margin: 0 0 12px;
+    font-size: 18px;
+    color: var(--text-primary);
+}
+
+.modal-content p {
+    margin: 0 0 20px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.modal-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.modal-btn.cancel {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.modal-btn.cancel:hover {
+    background: var(--bg-hover);
+}
+
+.modal-btn.confirm {
+    background: #dc3545;
+    color: white;
+}
+
+.modal-btn.confirm:hover {
+    background: #c82333;
+}
+
 /* Form Controls */
 input[type="checkbox"] {
     width: 16px;
