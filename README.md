@@ -1,16 +1,4 @@
-<image src="https://github.com/zingzy/spoo-snap/blob/main/.github/assets/spooSnapDemo.gif" alt="SpooSnap Demo Video" align="center">
-
-<h3 align="center">SpooSnap</h3>
-<p align="center">Instant URL Shortening Extension 🚀</p>
-
-<p align="center">
-    <a href="#-features"><kbd>🔥 Features</kbd></a>
-    <a href="#-getting-started"><kbd>🚀 Getting Started</kbd></a>
-    <a href="#-how-to-use"><kbd>🛠️ Usage</kbd></a>
-    <a href="#-contributing"><kbd>🤝 Contributing</kbd></a>
-</p>
-
-# ⚡ Introduction
+# SpooSnap - Instant URL Shortening Extension 🚀
 
 > Transform long URLs into short, shareable links instantly with this powerful Chrome extension powered by **spoo.me**.
 
@@ -47,13 +35,20 @@
    - SpooSnap automatically generates a short link and copies it to your clipboard
    - Click notification to copy or scan QR code
 
+<div align="center">
+
+![](https://github.com/zingzy/spoo-snap/blob/main/.github/assets/spooSnapDemo.gif)
+
+</div>
 
 2. 🛠️ **Popup Interface**:
    - Click the extension icon in your toolbar
    - View your URL shortening history
    - Access and modify settings
 
-<image src="https://github.com/zingzy/spoo-snap/blob/main/.github/assets/popupUi.png" alt="Popup UI Preview" align="center">
+<div align="center">
+<img src="https://github.com/zingzy/spoo-snap/blob/main/.github/assets/popupUi.png" alt="Popup UI Preview" align="center">
+</div>
 
 # 🔌 APIs Used
 
