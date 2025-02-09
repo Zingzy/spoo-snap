@@ -1,35 +1,33 @@
-# SpooSnap 🚀 - Instant URL Shortening Extension
+<image src="https://github.com/zingzy/spoo-snap/blob/main/.github/assets/spooSnapDemo.gif" alt="SpooSnap Demo Video" align="center">
 
-> Transform long URLs into short, shareable links instantly with this powerful Chrome extension powered by spoo.me
+<h3 align="center">SpooSnap</h3>
+<p align="center">Instant URL Shortening Extension 🚀</p>
 
-## ✨ Key Features
+<p align="center">
+    <a href="#-features"><kbd>🔥 Features</kbd></a>
+    <a href="#-getting-started"><kbd>🚀 Getting Started</kbd></a>
+    <a href="#-how-to-use"><kbd>🛠️ Usage</kbd></a>
+    <a href="#-contributing"><kbd>🤝 Contributing</kbd></a>
+</p>
 
-- 🔄 **Instant URL Shortening**
-  - Automatic shortening when URLs are copied
-  - Supports custom domains via spoo.me
+# ⚡ Introduction
 
-- 📱 **Smart QR Codes**
-  - Real-time QR code generation
-  - Customizable designs and colors
-  - Perfect for mobile sharing
+> Transform long URLs into short, shareable links instantly with this powerful Chrome extension powered by **spoo.me**.
 
-- 🔔 **Intelligent Notifications**
-  - Clean, minimal notification UI
-  - Shows shortened URL and QR preview
-  - Quick copy functionality
+# 🔥 Features
 
-- 📝 **History & Management**
-  - Track all shortened URLs
-  - Export history (CSV/JSON)
-  - Analytics integration
+- `Instant Shortening` - **Automatically shorten URLs** as you copy them 🔄
+- `Smart QR Codes` - Generate customizable QR codes in real-time 📱
+- `Intelligent Notifications` - Clean, minimal notifications with quick actions 🔔
+- `History Management` - Track and export your shortened URLs with analytics 📝
+- `Rich Customization` - Personalize the extension with themes and settings ⚙️
+- `Stealth Mode` - Silent operation without notifications for power users 🕴️
+- `Context Menu` - Right-click to shorten links directly from any webpage 🖱️
+- `Multi-browser Support` - Works across Chrome and Chromium-based browsers 🌐
+- `Custom Domains` - Use your own domain with spoo.me integration 🏢
+- `Data Export` - Export history in CSV/JSON formats for analysis 📊
 
-- ⚙️ **Rich Customization**
-  - Stealth mode operation
-  - Flexible QR code settings
-  - Notification preferences
-  - Theme options (Light/Dark)
-
-## 🚀 Quick Start
+# 🚀 Getting Started
 
 1. **Installation**
 
@@ -42,7 +40,7 @@
 
 **Or download directly from Chrome Web Store (coming soon)**
 
-## 🎯 How to Use
+# 🎯 How to Use
 
 1. **Basic Usage**:
    - **Copy any URL** to your clipboard or **right-click** on any url and select `Shorten Link` from the context menu
@@ -55,37 +53,62 @@
    - View your URL shortening history
    - Access and modify settings
 
-## 🔌 APIs Used
+<image src="https://github.com/zingzy/spoo-snap/blob/main/.github/assets/popupUi.png" alt="Popup UI Preview" align="center">
 
-### URL Shortening (spoo.me)
+# 🔌 APIs Used
+
+### URL Shortening ([spoo.me](https://spoo.me))
 - Supports URL shortening with optional features:
   - Password protection
   - Click limit setting
   - Bot blocking
 
-### QR Code Generation (qr.spoo.me)
+### QR Code Generation ([qr.spoo.me](https://qr.spoo.me))
 - Generates customizable QR codes with options for:
   - Custom colors (fill and background)
   - Various size options
 
 ## ⚙️ Configuration Options
 
-| Feature       | Options                           |
+| **Feature**   | **Options**                       |
 | ------------- | --------------------------------- |
 | QR Codes      | Enable/Disable, Style, Colors     |
 | Notifications | Duration, Auto-copy, Stealth mode |
 | Theme         | Light/Dark                        |
 | History       | Auto-save, Export formats         |
 
-## 🛠️ Technical Details
+# 🛠️ Technical Details
 
-Built using:
+**Built using**:
 - Manifest V3
 - Chrome Extension APIs (clipboard, storage, notifications)
 - [spoo.me](https://spoo.me/api) and [qr.spoo.me](https://qr.spoo.me) REST APIs
 
-## 🌐 Browser Compatibility
+# 🌐 Browser Compatibility
 
-Currently supports:
+**Currently supports**:
 - Google Chrome
 - Chromium-based browsers (Edge, Brave, etc.)
+
+# 🤝 Contributing
+
+**Contributions are always welcome!** 🎉 Here's how you can contribute:
+
+- Bugs are logged using the github issue system. To report a bug, simply [open a new issue](https://github.com/zingzy/spoo-snap/issues/new).
+- Make a [pull request](https://github.com/zingzy/spoo-snap/pull) for any feature or bug fix.
+
+> [!IMPORTANT]
+> For any type of support or queries, feel free to reach out to us at <kbd>[✉️ support@spoo.me](mailto:support@spoo.me)</kbd>
+
+---
+
+<h6 align="center">
+<img src="https://spoo.me/static/images/favicon.png" height=30 title="Spoo.me Copyright">
+<br>
+© spoo.me . 2025
+
+All Rights Reserved</h6>
+
+<p align="center">
+	<a href="https://github.com/spoo-me/url-shortener/blob/master/LICENSE.txt"><img src="https://img.shields.io/static/v1.svg?style=for-the-badge&label=License&message=APACHE-2.0&logoColor=d9e0ee&colorA=363a4f&colorB=b7bdf8"/></a>
+</p>
