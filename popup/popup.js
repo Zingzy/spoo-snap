@@ -70,8 +70,12 @@ class PopupUI {
             const index = Array.from(this.historyList.children).indexOf(historyItem);
             if (index === -1) return;
 
-            const isOriginal = target.classList.contains('copy-original');
-            await this.copyUrl(index, isOriginal);
+            if (target.classList.contains('analytics')) {
+                await this.openAnalytics(index);
+            } else {
+                const isOriginal = target.classList.contains('copy-original');
+                await this.copyUrl(index, isOriginal);
+            }
         });
 
         // Settings change handlers
@@ -270,6 +274,18 @@ class PopupUI {
         const b = parseInt(result[3], 16);
 
         return `(${r},${g},${b})`;
+    }
+
+    async openAnalytics(index) {
+        debug.log('Opening analytics for index:', index);
+        const history = await this.getHistory();
+        if (index < 0 || index >= history.length) return;
+
+        const shortUrl = history[index].shortUrl;
+        // Extract the ID from the end of the URL (after the last '/')
+        const urlId = shortUrl.split('/').pop();
+        const analyticsUrl = `https://spoo.me/stats/${urlId}`;
+        chrome.tabs.create({ url: analyticsUrl });
     }
 }
 
