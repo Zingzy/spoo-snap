@@ -37,7 +37,7 @@
 
 <div align="center">
 
-![](https://github.com/zingzy/spoo-snap/blob/main/.github/assets/spooSnapDemo.gif)
+<img src="https://github.com/zingzy/spoo-snap/blob/main/.github/assets/spooSnapDemo.gif" alt="spooSnap Demo" width=500>
 
 </div>
 
