@@ -16,8 +16,33 @@ class NotificationUI {
     constructor() {
         this.container = null;
         this.timeout = null;
+        this.darkMode = false;
         this.setupStyles();
+        this.initializeTheme();
         debug.log('NotificationUI initialized');
+    }
+
+    async initializeTheme() {
+        try {
+            const result = await chrome.storage.local.get('settings');
+            const settings = result.settings || {};
+            this.updateTheme(settings.theme === 'dark');
+
+            // Listen for settings changes
+            chrome.storage.onChanged.addListener((changes, namespace) => {
+                if (namespace === 'local' && changes.settings?.newValue?.theme) {
+                    this.updateTheme(changes.settings.newValue.theme === 'dark');
+                }
+            });
+        } catch (error) {
+            debug.error('Failed to initialize theme:', error);
+        }
+    }
+
+    updateTheme(isDark) {
+        this.darkMode = isDark;
+        document.documentElement.classList.toggle('spoo-dark-theme', isDark);
+        debug.log('Theme updated:', isDark ? 'dark' : 'light');
     }
 
     // Injects required CSS styles into the page
@@ -28,9 +53,9 @@ class NotificationUI {
                 position: fixed;
                 bottom: 20px;
                 right: 20px;
-                background: white;
+                background: var(--spoo-bg-color, white);
                 border-radius: 8px;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                box-shadow: var(--spoo-shadow, 0 4px 12px rgba(0, 0, 0, 0.15));
                 padding: 16px;
                 z-index: 999999;
                 font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
@@ -41,6 +66,7 @@ class NotificationUI {
                 opacity: 0;
                 transform: translateY(20px);
                 transition: all 0.3s ease;
+                color: var(--spoo-text-color, #333);
             }
             .spoo-notification.visible {
                 opacity: 1;
@@ -49,18 +75,18 @@ class NotificationUI {
             .spoo-notification .title {
                 font-size: 14px;
                 font-weight: 600;
-                color: #333;
+                color: var(--spoo-title-color, inherit);
                 margin-bottom: 4px;
             }
             .spoo-notification .url-container {
                 display: flex;
                 align-items: center;
                 gap: 8px;
-                background: #f5f5f5;
+                background: var(--spoo-container-bg, #f5f5f5);
                 padding: 8px;
                 border-radius: 4px;
                 font-size: 13px;
-                color: #666;
+                color: var(--spoo-text-secondary, #666);
             }
             .spoo-notification .url-text {
                 flex: 1;
@@ -82,7 +108,7 @@ class NotificationUI {
                 background: #0056b3;
             }
             .spoo-notification .qr-container {
-                background: #f5f5f5;
+                background: var(--spoo-container-bg, #f5f5f5);
                 padding: 8px;
                 border-radius: 4px;
                 text-align: center;
@@ -92,6 +118,7 @@ class NotificationUI {
                 height: 100px;
                 display: block;
                 margin: 0 auto;
+                border-radius: 4px;
             }
             .spoo-notification .close-btn {
                 position: absolute;
@@ -99,14 +126,25 @@ class NotificationUI {
                 right: 8px;
                 background: none;
                 border: none;
-                color: #999;
+                color: var(--spoo-text-secondary, #999);
                 cursor: pointer;
                 font-size: 18px;
                 line-height: 1;
                 padding: 0;
             }
             .spoo-notification .close-btn:hover {
-                color: #666;
+                color: var(--spoo-text-hover, #666);
+            }
+
+            /* Dark mode styles */
+            :root.spoo-dark-theme .spoo-notification {
+                --spoo-bg-color: #2d2d2d;
+                --spoo-text-color: #e1e1e1;
+                --spoo-title-color: #ffffff;
+                --spoo-container-bg: #3d3d3d;
+                --spoo-text-secondary: #b0b0b0;
+                --spoo-text-hover: #ffffff;
+                --spoo-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
             }
         `;
         document.head.appendChild(style);
@@ -249,21 +287,52 @@ async function processSelectedText() {
 // Initialize NotificationUI
 const notificationUI = new NotificationUI();
 
+// Handle page visibility changes
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden && notificationUI.container) {
+        notificationUI.hide();
+    }
+});
+
+// Handle page unload
+window.addEventListener('unload', () => {
+    if (notificationUI.container) {
+        notificationUI.hide();
+    }
+});
+
 // Event Listeners
 document.addEventListener('copy', () => {
     debug.log('Copy event detected');
     processSelectedText();
 });
 
-// Handle messages from background script
+// Handle messages from background script with error handling
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     debug.log('Received message:', message);
 
-    if (message.type === 'show_notification') {
-        const { shortUrl, qrUrl, duration } = message.data;
-        notificationUI.show(shortUrl, qrUrl, duration);
-        sendResponse({ success: true });
+    try {
+        if (message.type === 'show_notification') {
+            const { shortUrl, qrUrl, duration } = message.data;
+            // Remove any existing notification before showing new one
+            if (notificationUI.container) {
+                notificationUI.hide();
+            }
+            notificationUI.show(shortUrl, qrUrl, duration);
+            sendResponse({ success: true });
+        }
+    } catch (error) {
+        debug.error('Error processing message:', error);
+        sendResponse({ success: false, error: error.message });
     }
 
     return true;
+});
+
+// Handle port disconnection
+chrome.runtime.onDisconnect.addListener(() => {
+    debug.log('Port disconnected, cleaning up...');
+    if (notificationUI.container) {
+        notificationUI.hide();
+    }
 });

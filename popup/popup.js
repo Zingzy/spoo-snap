@@ -19,12 +19,30 @@ class PopupUI {
         this.historyList = document.querySelector('.history-list');
         this.template = document.getElementById('history-item-template');
 
+        // Theme setup
+        debug.log('Initializing theme system');
+
         // Set up UI
         this.setupNavigation();
         this.setupEventListeners();
         this.loadContent();
+        this.initializeTheme();
 
         debug.log('PopupUI initialized');
+    }
+
+    // Theme handling methods
+    async initializeTheme() {
+        const settings = await this.getSettings();
+        debug.log('Loading theme setting:', settings.theme);
+        document.getElementById('themeSelect').value = settings.theme;
+        this.applyTheme(settings.theme);
+    }
+
+    applyTheme(theme) {
+        debug.log('Applying theme:', theme);
+        document.documentElement.setAttribute('data-theme', theme);
+        debug.log('Theme applied:', theme);
     }
 
     // Sets up navigation tab handlers
@@ -63,7 +81,8 @@ class PopupUI {
             'qrColor',
             'qrBackground',
             'notificationDuration',
-            'autoCopy'
+            'autoCopy',
+            'themeSelect'
         ];
 
         settingsElements.forEach(id => {
@@ -140,6 +159,8 @@ class PopupUI {
         document.getElementById('qrBackground').value = this.rgbToHex(settings.qrBackground);
         document.getElementById('notificationDuration').value = settings.notificationDuration / 1000;
         document.getElementById('autoCopy').checked = settings.autoCopy;
+        document.getElementById('themeSelect').value = settings.theme;
+        this.applyTheme(settings.theme);
     }
 
     // Updates and saves user settings
@@ -152,11 +173,17 @@ class PopupUI {
                 qrColor: this.hexToRgb(document.getElementById('qrColor').value),
                 qrBackground: this.hexToRgb(document.getElementById('qrBackground').value),
                 notificationDuration: document.getElementById('notificationDuration').value * 1000,
-                autoCopy: document.getElementById('autoCopy').checked
+                autoCopy: document.getElementById('autoCopy').checked,
+                theme: document.getElementById('themeSelect').value
             };
 
             await chrome.storage.local.set({ settings });
             debug.log('Settings updated successfully:', settings);
+
+            // Apply theme immediately if it was changed
+            if ('theme' in settings) {
+                this.applyTheme(settings.theme);
+            }
         } catch (error) {
             debug.error('Failed to update settings:', error);
         }
@@ -207,7 +234,8 @@ class PopupUI {
             qrColor: '(0,0,0)',
             qrBackground: '(255,255,255)',
             notificationDuration: 30000,
-            autoCopy: true
+            autoCopy: true,
+            theme: 'light'
         };
     }
 
