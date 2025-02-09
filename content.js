@@ -287,10 +287,21 @@ function isValidUrl(text) {
 
 // Processes selected text if it's a valid URL
 async function processSelectedText() {
-    const selection = window.getSelection().toString().trim();
-    if (selection && isValidUrl(selection)) {
-        debug.log('Valid URL detected in selection:', selection);
-        chrome.runtime.sendMessage({ type: 'process_url', url: selection });
+    try {
+        const selection = window.getSelection().toString().trim();
+        if (selection && isValidUrl(selection)) {
+            debug.log('Valid URL detected in selection:', selection);
+            // Check if extension context is still valid
+            if (chrome.runtime?.id) {
+                await chrome.runtime.sendMessage({ type: 'process_url', url: selection });
+            } else {
+                debug.error('Extension context invalidated');
+                // Refresh the page to reinitialize the extension context
+                window.location.reload();
+            }
+        }
+    } catch (error) {
+        debug.error('Error processing selected text:', error);
     }
 }
 
