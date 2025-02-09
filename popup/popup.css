@@ -180,11 +180,72 @@ body {
     color: var(--text-primary);
 }
 
-/* Clear History Button and Header */
+/* History Header Actions */
 .history-header {
     display: flex;
     justify-content: flex-end;
     margin-bottom: 12px;
+}
+
+.history-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* Export Dropdown */
+.export-dropdown {
+    position: relative;
+}
+
+.export-btn {
+    background: var(--btn-primary-bg);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background-color 0.2s;
+}
+
+.export-btn:hover {
+    background: var(--btn-primary-hover);
+}
+
+.export-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 4px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    z-index: 100;
+}
+
+.export-option {
+    display: block;
+    width: 100%;
+    padding: 6px 12px;
+    border: none;
+    background: none;
+    color: var(--text-primary);
+    font-size: 13px;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.export-option:hover {
+    background: var(--bg-hover);
+}
+
+.export-dropdown[data-disabled="true"] .export-btn,
+.clear-history-btn[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 
 .clear-history-btn {

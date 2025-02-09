@@ -18,6 +18,9 @@ class PopupUI {
         this.currentTab = 'history';
         this.historyList = document.querySelector('.history-list');
         this.template = document.getElementById('history-item-template');
+        this.exportDropdown = document.querySelector('.export-dropdown');
+        this.exportBtn = document.querySelector('.export-btn');
+        this.exportMenu = document.querySelector('.export-menu');
 
         // Theme setup
         debug.log('Initializing theme system');
@@ -26,6 +29,7 @@ class PopupUI {
         this.setupNavigation();
         this.setupEventListeners();
         this.setupClearHistory();
+        this.setupExport();
         this.loadContent();
         this.initializeTheme();
 
@@ -145,10 +149,12 @@ class PopupUI {
 
         if (history.length === 0) {
             this.historyList.innerHTML = '<div class="empty-state">No history yet</div>';
+            this.exportDropdown.setAttribute('data-disabled', 'true');
             return;
         }
 
         this.historyList.innerHTML = '';
+        this.exportDropdown.removeAttribute('data-disabled');
 
         history.forEach(item => {
             const historyItem = this.template.content.cloneNode(true);
@@ -316,6 +322,95 @@ class PopupUI {
         const b = parseInt(result[3], 16);
 
         return `(${r},${g},${b})`;
+    }
+
+    setupExport() {
+        debug.log('Setting up export functionality');
+
+        // Toggle dropdown on button click
+        this.exportBtn.addEventListener('click', () => {
+            if (this.exportDropdown.getAttribute('data-disabled') === 'true') return;
+
+            const isExpanded = this.exportBtn.getAttribute('aria-expanded') === 'true';
+            this.exportBtn.setAttribute('aria-expanded', !isExpanded);
+            this.exportMenu.hidden = isExpanded;
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (event) => {
+            if (!this.exportDropdown.contains(event.target)) {
+                this.exportBtn.setAttribute('aria-expanded', 'false');
+                this.exportMenu.hidden = true;
+            }
+        });
+
+        // Handle export option clicks
+        this.exportMenu.addEventListener('click', async (event) => {
+            const button = event.target;
+            if (!button.matches('.export-option')) return;
+
+            const format = button.dataset.format;
+            await this.exportHistory(format);
+
+            // Hide menu after selection
+            this.exportBtn.setAttribute('aria-expanded', 'false');
+            this.exportMenu.hidden = true;
+        });
+    }
+
+    async exportHistory(format) {
+        debug.log('Exporting history as:', format);
+        const history = await this.getHistory();
+
+        let content;
+        let filename;
+        let type;
+
+        if (format === 'json') {
+            content = JSON.stringify(history, null, 2);
+            filename = 'history.json';
+            type = 'application/json';
+        } else {
+            // CSV format
+            const headers = ['Short URL', 'Original URL', 'Timestamp'];
+            const rows = [headers];
+
+            history.forEach(item => {
+                rows.push([
+                    item.shortUrl,
+                    item.originalUrl,
+                    new Date(item.timestamp).toLocaleString()
+                ]);
+            });
+
+            content = rows.map(row => row.map(cell =>
+                `"${cell.replace(/"/g, '""')}"`).join(',')
+            ).join('\n');
+
+            filename = 'history.csv';
+            type = 'text/csv';
+        }
+
+        // Create and trigger download
+        const blob = new Blob([content], { type: `${type};charset=utf-8;` });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        // Show feedback
+        const originalText = this.exportBtn.textContent;
+        this.exportBtn.textContent = 'Exported!';
+        this.exportBtn.style.background = '#28a745';
+
+        setTimeout(() => {
+            this.exportBtn.textContent = originalText;
+            this.exportBtn.style.background = '';
+        }, 2000);
     }
 
     async openAnalytics(index) {
